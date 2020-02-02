@@ -1872,7 +1872,7 @@ void psxBios_OpenTh() { // 0e
 }
 
 /*
- *	int CloseTh(long _Thread);
+ *	int CloseTh(long thread);
  */
 
 void psxBios_CloseTh() { // 0f
@@ -1891,7 +1891,7 @@ void psxBios_CloseTh() { // 0f
 }
 
 /*
- *	int ChangeTh(long _Thread);
+ *	int ChangeTh(long thread);
  */
 
 void psxBios_ChangeTh() { // 10

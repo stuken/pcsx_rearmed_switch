@@ -9,7 +9,7 @@ else
 ifeq ($(platform), vita)
 CFLAGS += -O3 -DNDEBUG
 else
-CFLAGS += -O3 -DNDEBUG
+CFLAGS += -O2 -DNDEBUG
 endif
 endif
 CXXFLAGS += $(CFLAGS)
@@ -51,7 +51,7 @@ OBJS += libpcsxcore/cdriso.o libpcsxcore/cdrom.o libpcsxcore/cheat.o libpcsxcore
 	libpcsxcore/psxcommon.o libpcsxcore/psxcounters.o libpcsxcore/psxdma.o libpcsxcore/psxhle.o \
 	libpcsxcore/psxhw.o libpcsxcore/psxinterpreter.o libpcsxcore/psxmem.o libpcsxcore/r3000a.o \
 	libpcsxcore/sio.o libpcsxcore/socket.o libpcsxcore/spu.o
-OBJS += libpcsxcore/gte.o libpcsxcore/gte_divider.o
+OBJS += libpcsxcore/gte.o libpcsxcore/gte_nf.o libpcsxcore/gte_divider.o
 ifeq ($(WANT_ZLIB),1)
 CFLAGS += -Ideps/zlib
 OBJS += deps/zlib/adler32.o \
@@ -157,7 +157,7 @@ OBJS += plugins/gpu_unai/gpulib_if.o
 ifeq "$(ARCH)" "arm"
 OBJS += plugins/gpu_unai/gpu_arm.o
 endif
-plugins/gpu_unai/gpulib_if.o: CFLAGS += -DREARMED -O3
+plugins/gpu_unai/gpulib_if.o: CFLAGS += -DREARMED -O3 
 CC_LINK = $(CXX)
 endif
 
@@ -325,7 +325,7 @@ frontend/libpicofe/%.c:
 	@exit 1
 
 libpcsxcore/gte_nf.o: libpcsxcore/gte.c
-	$(CC) -c -o $@ $^ $(CFLAGS)
+	$(CC) -c -o $@ $^ $(CFLAGS) -DFLAGLESS
 
 frontend/revision.h: FORCE
 	@(git describe || echo) | sed -e 's/.*/#define REV "\0"/' > $@_

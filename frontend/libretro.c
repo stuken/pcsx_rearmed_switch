@@ -45,11 +45,6 @@
 #include "3ds/3ds_utils.h"
 #endif
 
-//#ifdef SWITCH
-//#include <switch.h>
-//#endif
-
-
 #define PORTS_NUMBER 8
 
 #ifndef MIN
@@ -1695,63 +1690,6 @@ static void update_variables(bool in_flight)
 #endif
       }
    }
-
-#ifdef GPU_UNAI
-   var.value = "NULL";
-   var.key = "pcsx_rearmed_ilace_force";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         pl_rearmed_cbs.gpu_unai.ilace_force = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         pl_rearmed_cbs.gpu_unai.ilace_force = 1;
-   }
-
-   var.value = "NULL";
-   var.key = "pcsx_rearmed_pixel_skip";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         pl_rearmed_cbs.gpu_unai.pixel_skip = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         pl_rearmed_cbs.gpu_unai.pixel_skip = 1;
-   }
-
-   var.value = "NULL";
-   var.key = "pcsx_rearmed_lighting";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         pl_rearmed_cbs.gpu_unai.lighting = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         pl_rearmed_cbs.gpu_unai.lighting = 1;
-   }
-
-   var.value = "NULL";
-   var.key = "pcsx_rearmed_fast_lighting";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         pl_rearmed_cbs.gpu_unai.fast_lighting = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         pl_rearmed_cbs.gpu_unai.fast_lighting = 1;
-   }
-
-   var.value = "NULL";
-   var.key = "pcsx_rearmed_blending";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) || var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0)
-         pl_rearmed_cbs.gpu_unai.blending = 0;
-      else if (strcmp(var.value, "enabled") == 0)
-         pl_rearmed_cbs.gpu_unai.blending = 1;
-   }
-#endif // GPU_UNAI
 
 #ifdef __ARM_NEON__
    var.value = "NULL";

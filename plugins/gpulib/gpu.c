@@ -9,7 +9,6 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdlib.h> /* for calloc */
 
@@ -68,8 +67,6 @@ static noinline void do_reset(void)
 
 static noinline void update_width(void)
 {
-  int old_width = gpu.screen.w;
-
   int sw = gpu.screen.x2 - gpu.screen.x1;
   if (sw <= 0 || sw >= 2560)
     // full width
@@ -81,7 +78,6 @@ static noinline void update_width(void)
 static noinline void update_height(void)
 {
   // TODO: emulate this properly..
-  int old_height = gpu.screen.h;
   int sh = gpu.screen.y2 - gpu.screen.y1;
   if (gpu.status.dheight)
     sh *= 2;
@@ -194,6 +190,7 @@ static int map_vram(void)
     return -1;
   }
 }
+
 static int allocate_vram(void)
 {
   gpu.vram = vram_ptr_orig = (uint16_t*)calloc(VRAM_SIZE + (VRAM_ALIGN-1), 1);
@@ -245,6 +242,8 @@ long GPUinit(void)
 
 long GPUshutdown(void)
 {
+  long ret;
+
   renderer_finish();
   ret = vout_finish();
 
@@ -313,7 +312,6 @@ void GPUwriteStatus(uint32_t data)
       break;
     case 0x08:
       gpu.status.reg = (gpu.status.reg & ~0x7f0000) | ((data & 0x3F) << 17) | ((data & 0x40) << 10);
-
       gpu.screen.hres = hres[(gpu.status.reg >> 16) & 7];
       gpu.screen.vres = vres[(gpu.status.reg >> 19) & 3];
       update_width();
