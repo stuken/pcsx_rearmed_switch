@@ -132,9 +132,21 @@ static bool axis_bounds_modifier;
 #define VOUT_MAX_WIDTH 1024
 #define VOUT_MAX_HEIGHT 512
 
+// FIXME: Needs nicer way to cleanup jit buffer
+extern size_t jitOffset;
+extern bool jitInitialized;
+extern Jit jitController;
+void freeJitBuffer() {
+   jitClose(&jitController);
+   jitOffset = 0;
+   jitInitialized = false;
+}
+
 //Dummy functions
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info){return false;}
-void retro_unload_game(void){}
+void retro_unload_game(void){
+	freeJitBuffer();
+}
 static int vout_open(void){return 0;}
 static void vout_close(void){}
 static int snd_init(void){return 0;}
