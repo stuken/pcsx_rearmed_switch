@@ -83,7 +83,11 @@ else ifeq ($(platform),$(filter $(platform),ios-arm64))
 	USE_DYNAREC = 0
 	HAVE_NEON = 0
 	BUILTIN_GPU = peops
-	TARGET := $(TARGET_NAME)_libretro_ios.dylib
+	TARGET := $(TARGET_NAME)_interpreter_libretro_ios.dylib
+
+	CC = clang -arch arm64 -isysroot $(IOSSDK) -miphoneos-version-min=8.0
+	CXX = clang++ -arch arm64 -isysroot $(IOSSDK) -miphoneos-version-min=8.0
+	CFLAGS += -marm -DIOS
 
 # Nintendo Switch (libnx)
 else ifeq ($(platform), libnx)
@@ -146,6 +150,34 @@ else
 	CC_AS  += -miphoneos-version-min=5.0
 	CFLAGS += -miphoneos-version-min=5.0
 endif
+
+# Nintendo Switch (libnx)
+else ifeq ($(platform), libnx)
+   export DEPSDIR := $(CURDIR)/
+   include $(DEVKITPRO)/libnx/switch_rules
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   ARCH := arm64
+   BUILTIN_GPU = unai
+   HAVE_VFS_FD = 0
+   CFLAGS += -O3 -fomit-frame-pointer -ffast-math -I$(DEVKITPRO)/libnx/include/ -fPIE -Wl,--allow-multiple-definition -include $(LIBNX)/include/switch.h
+   CFLAGS += -specs=$(DEVKITPRO)/libnx/switch.specs -DNO_OS -DNO_DYLIB -DNO_SOCKET -D__arm64__ -D__ARM_NEON__
+   CFLAGS += -D__SWITCH__
+   CFLAGS += -DARM -D__aarch64__=1 -march=armv8-a -mtune=cortex-a57 -mtp=soft -DHAVE_INTTYPES -DLSB_FIRST -ffast-math -mcpu=cortex-a57+crc+fp+simd -ffunction-sections
+   CFLAGS += -ftree-vectorize
+   CFLAGS += -Ifrontend/switch -ftree-vectorize
+   LIBPTHREAD :=
+   USE_DYNAREC = 0
+   STATIC_LINKING=1
+
+# Lakka Switch (arm64)
+else ifeq ($(platform), arm64)
+   TARGET := $(TARGET_NAME)_libretro.so
+   ARCH := arm64
+   BUILTIN_GPU = unai
+   fpic := -fPIC
+   CFLAGS := $(filter-out -O2, $(CFLAGS))
+   CFLAGS += -O3 -ftree-vectorize
+   USE_DYNAREC = 0
 
 # PS3
 else ifeq ($(platform), ps3)
@@ -213,12 +245,11 @@ else ifeq ($(platform), ctr)
 	CFLAGS += -Werror=implicit-function-declaration
 
 #	CFLAGS += -DPCSX
-#	BUILTIN_GPU = unai
+	BUILTIN_GPU = unai
 	USE_DYNAREC = 1
 	DRC_CACHE_BASE = 0
 	ARCH = arm
 	HAVE_NEON = 0
-	HAVE_CHD = 0
 	STATIC_LINKING = 1
 
 # Xbox 360

@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include "../../libpcsxcore/plugins.h"    // For GPUFreeze_t, GPUScreenInfo_t
+#include <stdlib.h> /* for calloc */
+
 #include "gpu.h"
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
@@ -146,7 +147,7 @@ static noinline void get_gpu_info(uint32_t data)
   }
 }
 
-// double, for overdraw guard, plus 4kb front guard,
+// double, for overdraw guard
 #define VRAM_SIZE ((1024 * 512 * 2 * 2) + 4096)
 
 //  Minimum 16-byte VRAM alignment needed by gpu_unai's pixel-skipping
@@ -235,13 +236,17 @@ long GPUinit(void)
   gpu.cmd_len = 0;
   do_reset();
 
+  /*if (gpu.mmap != NULL) {
+    if (map_vram() != 0)
+      ret = -1;
+  }*/
   return ret;
 }
 
 long GPUshutdown(void)
 {
   renderer_finish();
-  long ret = vout_finish();
+  ret = vout_finish();
 
   if (vram_ptr_orig != NULL) {
 #ifdef GPULIB_USE_MMAP

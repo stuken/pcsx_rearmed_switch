@@ -25,8 +25,6 @@
 //#include "port.h"
 #include "gpu_unai.h"
 
-#define GPU_INLINE static inline __attribute__((always_inline))
-
 #define VIDEO_WIDTH 320
 
 #ifdef TIME_IN_MSEC

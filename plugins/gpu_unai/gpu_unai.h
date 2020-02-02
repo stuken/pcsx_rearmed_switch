@@ -43,6 +43,9 @@
                                          //  defined, use old inaccurate division
 
 
+#define GPU_INLINE static inline __attribute__((always_inline))
+#define INLINE     static inline __attribute__((always_inline))
+
 #define u8  uint8_t
 #define s8  int8_t
 #define u16 uint16_t

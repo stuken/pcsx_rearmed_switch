@@ -131,7 +131,7 @@ void emu_set_default_config(void)
 	pl_rearmed_cbs.gpu_peops.iUseDither = 0;
 	pl_rearmed_cbs.gpu_peops.dwActFixes = 1<<7;
 	pl_rearmed_cbs.gpu_unai.ilace_force = 0;
-	pl_rearmed_cbs.gpu_unai.pixel_skip = 0;
+	pl_rearmed_cbs.gpu_unai.pixel_skip = 1;
 	pl_rearmed_cbs.gpu_unai.lighting = 1;
 	pl_rearmed_cbs.gpu_unai.fast_lighting = 1;
 	pl_rearmed_cbs.gpu_unai.blending = 1;
@@ -151,7 +151,7 @@ void emu_set_default_config(void)
 	spu_config.iVolume = 768;
 	spu_config.iTempo = 0;
 	spu_config.iUseThread = 1; // no effect if only 1 core is detected
-#ifdef HAVE_PRE_ARMV7 /* XXX GPH hack */
+#if defined(HAVE_PRE_ARMV7) && !defined(_3DS) /* XXX GPH hack */
 	spu_config.iUseReverb = 0;
 	spu_config.iUseInterpolation = 0;
 	spu_config.iTempo = 1;
@@ -802,6 +802,7 @@ int emu_load_state(int slot)
 	return LoadState(fname);
 }
 
+#ifndef HAVE_LIBRETRO
 #ifndef ANDROID
 
 void SysPrintf(const char *fmt, ...) {
@@ -826,6 +827,7 @@ void SysPrintf(const char *fmt, ...) {
 }
 
 #endif
+#endif /* HAVE_LIBRETRO */
 
 void SysMessage(const char *fmt, ...) {
 	va_list list;
@@ -875,7 +877,7 @@ static int _OpenPlugins(void) {
 
 	if (Config.UseNet && !NetOpened) {
 		netInfo info;
-		char path[MAXPATHLEN];
+		char path[MAXPATHLEN * 2];
 		char dotdir[MAXPATHLEN];
 
 		MAKE_PATH(dotdir, "/.pcsx/plugins/", NULL);

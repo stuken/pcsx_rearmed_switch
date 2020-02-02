@@ -25,9 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../gpulib/gpu.h"
+//#include "port.h"
 #include "gpu_unai.h"
-
-#define GPU_INLINE static inline __attribute__((always_inline))
 
 // GPU fixed point math
 #include "gpu_fixedpoint.h"
