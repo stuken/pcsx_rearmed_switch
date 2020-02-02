@@ -604,6 +604,7 @@ struct jit_compiler {
 #endif
 };
 
+#include <switch.h>
 #define _jitc				_jit->comp
 struct jit_state {
     union {

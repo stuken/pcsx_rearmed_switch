@@ -210,8 +210,13 @@ typedef union {
     jit_int32_t		w;
 #  undef ui
 } instr_t;
+
+extern size_t jitOffset;
+extern bool jitInitialized;
+extern Jit jitController;
+
 #  define stack_framesize		160
-#  define ii(i)				*_jit->pc.ui++ = i
+#  define ii(i)				*((jit_uword_t*)((uintptr_t)(_jit->pc.ui++) - (uintptr_t)jitController.rx_addr + (uintptr_t)jitController.rw_addr))  = i
 #  define ldr(r0,r1)			ldr_l(r0,r1)
 #  define ldxr(r0,r1,r2)		ldxr_l(r0,r1,r2)
 #  define ldxi(r0,r1,i0)		ldxi_l(r0,r1,i0)
@@ -2407,19 +2412,23 @@ _patch_at(jit_state_t *_jit, jit_word_t instr, jit_word_t label)
 	jit_int32_t	*i;
 	jit_word_t	 w;
     } u;
+    
+    jit_word_t rxInstr = instr;
+    instr = ((jit_word_t)((uintptr_t)(instr) - (uintptr_t)jitController.rx_addr + (uintptr_t)jitController.rw_addr));
+    
     u.w = instr;
     i.w = u.i[0];
     fc  = i.w & 0xfc000000;
     ff  = i.w & 0xff000000;
     ffc = i.w & 0xffc00000;
     if (fc == A64_B || fc == A64_BL) {
-	d = (label - instr) >> 2;
+	d = (label - rxInstr) >> 2;
 	assert(d >= -33554432 && d <= 33554431);
 	i.imm26.b = d;
 	u.i[0] = i.w;
     }
     else if (ff == A64_B_C || ff == (A64_CBZ|XS) || ff == (A64_CBNZ|XS)) {
-	d = (label - instr) >> 2;
+	d = (label - rxInstr) >> 2;
 	assert(d >= -262148 && d <= 262143);
 	i.imm19.b = d;
 	u.i[0] = i.w;
@@ -2442,5 +2451,8 @@ _patch_at(jit_state_t *_jit, jit_word_t instr, jit_word_t label)
     }
     else
 	abort();
+
+    armDCacheFlush((void*)instr, 0x4);
+    armICacheInvalidate((void*)rxInstr, 0x4);
 }
 #endif

@@ -1528,7 +1528,7 @@ jit_flush(void *fptr, void *tptr)
 #if defined(__GNUC__)
     jit_word_t		f, t, s;
 
-    s = sysconf(_SC_PAGE_SIZE);
+    s = 0x1000;
     f = (jit_word_t)fptr & -s;
     t = (((jit_word_t)tptr) + s - 1) & -s;
     __clear_cache((void *)f, (void *)t);

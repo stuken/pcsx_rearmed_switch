@@ -19,7 +19,7 @@
 
 #include <lightning.h>
 #include <lightning/jit_private.h>
-#include <sys/mman.h>
+
 #if defined(__sgi)
 #  include <fcntl.h>
 #endif
@@ -956,10 +956,9 @@ _jit_destroy_state(jit_state_t *_jit)
 #if DEVEL_DISASSEMBLER
     jit_really_clear_state();
 #endif
-    if (!_jit->user_code)
-	munmap(_jit->code.ptr, _jit->code.length);
     if (!_jit->user_data)
-	munmap(_jit->data.ptr, _jit->data.length);
+		free(_jit->data.ptr);
+	//jitClose(&jitController);
     jit_free((jit_pointer_t *)&_jit);
 }
 
@@ -1900,9 +1899,7 @@ _jit_dataset(jit_state_t *_jit)
 #if defined(__sgi)
 	mmap_fd = open("/dev/zero", O_RDWR);
 #endif
-	_jit->data.ptr = mmap(NULL, _jit->data.length,
-			      PROT_READ | PROT_WRITE,
-			      MAP_PRIVATE | MAP_ANON, mmap_fd, 0);
+	_jit->data.ptr = malloc(_jit->data.length);
 	assert(_jit->data.ptr != MAP_FAILED);
 #if defined(__sgi)
 	close(mmap_fd);
@@ -2003,6 +2000,10 @@ _jit_set_data(jit_state_t *_jit, jit_pointer_t ptr,
     _jit->user_data = 1;
 }
 
+size_t jitOffset = 0;
+bool jitInitialized;
+Jit jitController;
+
 jit_pointer_t
 _jit_emit(jit_state_t *_jit)
 {
@@ -2026,9 +2027,17 @@ _jit_emit(jit_state_t *_jit)
 #if defined(__sgi)
 	mmap_fd = open("/dev/zero", O_RDWR);
 #endif
-	_jit->code.ptr = mmap(NULL, _jit->code.length,
-			      PROT_EXEC | PROT_READ | PROT_WRITE,
-			      MAP_PRIVATE | MAP_ANON, mmap_fd, 0);
+	if(!jitInitialized)
+	{
+		jitCreate(&jitController, 1024 * 1024 * 64); // pray
+		jitInitialized = true;
+	}
+
+	_jit->code.ptr = (void*)((uintptr_t)jitGetRxAddr(&jitController) + jitOffset);
+    //printf("Code Pointer: %p Size: %ld\n", _jit->code.ptr, _jit->code.length);
+    //fflush(stdout);
+    jitOffset += _jit->code.length;
+
 	assert(_jit->code.ptr != MAP_FAILED);
     }
     _jitc->code.end = _jit->code.ptr + _jit->code.length -
@@ -2055,7 +2064,7 @@ _jit_emit(jit_state_t *_jit)
 #endif
 
 #if !HAVE_MREMAP
-	    munmap(_jit->code.ptr, _jit->code.length);
+	    //munmap(_jit->code.ptr, _jit->code.length);
 #endif
 
 #if HAVE_MREMAP
@@ -2067,12 +2076,17 @@ _jit_emit(jit_state_t *_jit)
 				    length, MREMAP_MAYMOVE, NULL);
 #  endif
 #else
-	    _jit->code.ptr = mmap(NULL, length,
+	    /*_jit->code.ptr = mmap(NULL, length,
 				  PROT_EXEC | PROT_READ | PROT_WRITE,
-				  MAP_PRIVATE | MAP_ANON, mmap_fd, 0);
+				  MAP_PRIVATE | MAP_ANON, mmap_fd, 0);*/
+		/* /shrug */
+        /*void* oldPtr = _jit->code.ptr;
+        jitOffset += length;
+        _jit->code.ptr = (void*)((uintptr_t)jitGetRxAddr(&jitController) + jitOffset);
+		memcpy(_jit->code.ptr, oldPtr, _jit->code.length);*/
 #endif
 
-	    assert(_jit->code.ptr != MAP_FAILED);
+	    //assert(_jit->code.ptr != MAP_FAILED);
 	    _jit->code.length = length;
 	    _jitc->code.end = _jit->code.ptr + _jit->code.length -
 		jit_get_max_instr();
@@ -2094,16 +2108,12 @@ _jit_emit(jit_state_t *_jit)
     if (_jit->user_data)
 	jit_free((jit_pointer_t *)&_jitc->data.ptr);
     else {
-	result = mprotect(_jit->data.ptr, _jit->data.length, PROT_READ);
-	assert(result == 0);
     }
     if (!_jit->user_code) {
-	result = mprotect(_jit->code.ptr, _jit->code.length,
-			  PROT_READ | PROT_EXEC);
 	assert(result == 0);
     }
 
-    return (_jit->code.ptr);
+    return (void*)_jit->code.ptr;
 fail:
     return (NULL);
 }
