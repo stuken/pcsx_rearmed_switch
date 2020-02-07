@@ -19,6 +19,7 @@
 
 #include <lightning.h>
 #include <lightning/jit_private.h>
+#include "../../../libretro-common/include/nx_jit_heap/nx_jit_heap.h"
 
 #if defined(__sgi)
 #  include <fcntl.h>
@@ -34,6 +35,12 @@
 #define jit_regload_reload		0	/* convert to reload */
 #define jit_regload_delete		1	/* just remove node */
 #define jit_regload_isdead		2	/* delete and unset live bit */
+
+bool jitInitialized;
+Jit jitController;
+size_t jitOffset = 0;
+u32* rw_addr = NULL;
+u32* rx_addr = NULL;
 
 /*
  * Prototypes
@@ -958,8 +965,9 @@ _jit_destroy_state(jit_state_t *_jit)
 #endif
     if (!_jit->user_data)
 		free(_jit->data.ptr);
-	//jitClose(&jitController);
-    jit_free((jit_pointer_t *)&_jit);
+	printf("releasing: %p\n", (uintptr_t)_jit->code.ptr - (uintptr_t)rx_addr + (uintptr_t)rw_addr);
+	nx_jit_free((uintptr_t)_jit->code.ptr - (uintptr_t)rx_addr + (uintptr_t)rw_addr);
+	jit_free((jit_pointer_t *)&_jit);
 }
 
 void
@@ -2000,10 +2008,6 @@ _jit_set_data(jit_state_t *_jit, jit_pointer_t ptr,
     _jit->user_data = 1;
 }
 
-size_t jitOffset = 0;
-bool jitInitialized;
-Jit jitController;
-
 jit_pointer_t
 _jit_emit(jit_state_t *_jit)
 {
@@ -2023,21 +2027,25 @@ _jit_emit(jit_state_t *_jit)
 
     _jitc->emit = 1;
 
+	u32* rw_page = NULL;
     if (!_jit->user_code) {
 #if defined(__sgi)
 	mmap_fd = open("/dev/zero", O_RDWR);
 #endif
 	if(!jitInitialized)
 	{
+		printf("entering jitInitialized\n");
 		jitCreate(&jitController, 1024 * 1024 * 64); // pray
+		printf("jit created\n");
+		nx_jit_heap_init(jitGetRwAddr(&jitController));
+		printf("heap created\n");
+		rw_addr = jitGetRwAddr(&jitController);
+		rx_addr = jitGetRxAddr(&jitController);
 		jitInitialized = true;
 	}
-
-	_jit->code.ptr = (void*)((uintptr_t)jitGetRxAddr(&jitController) + jitOffset);
-    //printf("Code Pointer: %p Size: %ld\n", _jit->code.ptr, _jit->code.length);
-    //fflush(stdout);
-    jitOffset += _jit->code.length;
-
+	rw_page = nx_jit_malloc(_jit->code.length);
+	_jit->code.ptr = rw_page - rw_addr + rx_addr;
+	printf("_jit->code.ptr: %p:%x\n", _jit->code.ptr, *_jit->code.ptr);
 	assert(_jit->code.ptr != MAP_FAILED);
     }
     _jitc->code.end = _jit->code.ptr + _jit->code.length -
@@ -2113,6 +2121,8 @@ _jit_emit(jit_state_t *_jit)
 	assert(result == 0);
     }
 
+	armDCacheFlush(rw_page,  _jit->code.length + 40);
+	armICacheInvalidate(_jit->code.ptr, _jit->code.length + 40);
     return (void*)_jit->code.ptr;
 fail:
     return (NULL);

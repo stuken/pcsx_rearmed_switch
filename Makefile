@@ -185,6 +185,11 @@ plugins/gpu_unai/gpulib_if.o: CFLAGS += -DREARMED -O3
 CC_LINK = $(CXX)
 endif
 
+ifeq "$(platform)" "libnx"
+CFLAGS += -Ilibretro-common/include/nx_jit_heap
+OBJS += libretro-common/include/nx_jit_heap/nx_jit_heap.o
+endif
+
 # cdrcimg
 OBJS += plugins/cdrcimg/cdrcimg.o
 

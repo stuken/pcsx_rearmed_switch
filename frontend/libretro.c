@@ -133,12 +133,10 @@ static bool axis_bounds_modifier;
 #define VOUT_MAX_HEIGHT 512
 
 // FIXME: Needs nicer way to cleanup jit buffer
-extern size_t jitOffset;
 extern bool jitInitialized;
 extern Jit jitController;
 void freeJitBuffer() {
    jitClose(&jitController);
-   jitOffset = 0;
    jitInitialized = false;
 }
 
