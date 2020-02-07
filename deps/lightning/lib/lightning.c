@@ -965,7 +965,6 @@ _jit_destroy_state(jit_state_t *_jit)
 #endif
     if (!_jit->user_data)
 		free(_jit->data.ptr);
-	printf("releasing: %p\n", (uintptr_t)_jit->code.ptr - (uintptr_t)rx_addr + (uintptr_t)rw_addr);
 	nx_jit_free((uintptr_t)_jit->code.ptr - (uintptr_t)rx_addr + (uintptr_t)rw_addr);
 	jit_free((jit_pointer_t *)&_jit);
 }
@@ -2034,18 +2033,14 @@ _jit_emit(jit_state_t *_jit)
 #endif
 	if(!jitInitialized)
 	{
-		printf("entering jitInitialized\n");
 		jitCreate(&jitController, 1024 * 1024 * 64); // pray
-		printf("jit created\n");
 		nx_jit_heap_init(jitGetRwAddr(&jitController));
-		printf("heap created\n");
 		rw_addr = jitGetRwAddr(&jitController);
 		rx_addr = jitGetRxAddr(&jitController);
 		jitInitialized = true;
 	}
 	rw_page = nx_jit_malloc(_jit->code.length);
 	_jit->code.ptr = rw_page - rw_addr + rx_addr;
-	printf("_jit->code.ptr: %p:%x\n", _jit->code.ptr, *_jit->code.ptr);
 	assert(_jit->code.ptr != MAP_FAILED);
     }
     _jitc->code.end = _jit->code.ptr + _jit->code.length -
