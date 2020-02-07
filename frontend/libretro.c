@@ -136,15 +136,13 @@ static bool axis_bounds_modifier;
 extern bool jitInitialized;
 extern Jit jitController;
 void freeJitBuffer() {
-   jitClose(&jitController);
-   jitInitialized = false;
+	jitClose(&jitController);
+	jitInitialized = false;
 }
 
 //Dummy functions
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info){return false;}
-void retro_unload_game(void){
-	freeJitBuffer();
-}
+void retro_unload_game(void){}
 static int vout_open(void){return 0;}
 static void vout_close(void){}
 static int snd_init(void){return 0;}
@@ -2744,6 +2742,9 @@ void retro_deinit(void)
 {
 	ClosePlugins();
 	SysClose();
+	//Only close jit buffer after lightrec has been shutdown.
+	freeJitBuffer();
+
 #ifdef _3DS
    linearFree(vout_buf);
 #else
